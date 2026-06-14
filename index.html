@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎤 Karaoké Night</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131c;
+      --surface2: #1c1c2e;
+      --border: #2a2a40;
+      --accent: #ff3cac;
+      --text: #f0f0f5;
+      --muted: #6b6b8a;
+      --success: #00e5a0;
+      --gradient: linear-gradient(135deg, #ff3cac, #784ba0, #2b86c5);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 20% 20%, rgba(255,60,172,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 80%, rgba(43,134,197,0.08) 0%, transparent 50%);
+      animation: ambientShift 12s ease-in-out infinite alternate; pointer-events: none; z-index: 0;
+    }
+    @keyframes ambientShift { 0% { transform: translate(0,0); } 100% { transform: translate(-2%,-2%); } }
+    .app { position: relative; z-index: 1; min-height: 100vh; }
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+
+    /* WELCOME */
+    #screen-welcome { text-align: center; gap: 32px; }
+    .logo-area { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .mic-icon { width: 80px; height: 80px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; animation: pulse 2.5s ease-in-out infinite; box-shadow: 0 0 40px rgba(255,60,172,0.3); }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 30px rgba(255,60,172,0.3); transform: scale(1); } 50% { box-shadow: 0 0 60px rgba(255,60,172,0.5); transform: scale(1.05); } }
+    .app-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 12vw, 90px); letter-spacing: 4px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+    .app-subtitle { color: var(--muted); font-size: 15px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+    .welcome-form { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 380px; }
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .input-field { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; padding: 14px 18px; transition: border-color 0.2s, box-shadow 0.2s; width: 100%; }
+    .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,60,172,0.15); }
+    .btn-primary { background: var(--gradient); border: none; border-radius: 12px; color: #fff; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; padding: 16px 24px; transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s; width: 100%; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,60,172,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ADMIN */
+    #screen-admin { text-align: center; gap: 24px; }
+    .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+    .admin-badge { background: rgba(255,60,172,0.1); border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: 1px; padding: 6px 14px; text-transform: uppercase; }
+    .admin-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; }
+    .admin-desc { color: var(--muted); font-size: 14px; line-height: 1.6; text-align: center; }
+    .token-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 12px; color: var(--muted); line-height: 1.7; width: 100%; word-break: break-all; }
+    .token-box strong { color: var(--text); }
+    .btn-copy { background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--text); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; padding: 10px 16px; transition: border-color 0.2s, background 0.2s; width: 100%; }
+    .btn-copy:hover { border-color: var(--accent); background: rgba(255,60,172,0.05); }
+
+    /* WAITING */
+    #screen-waiting { text-align: center; gap: 20px; }
+    .waiting-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; max-width: 380px; width: 100%; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .waiting-icon { font-size: 48px; }
+    .waiting-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; }
+    .waiting-desc { color: var(--muted); font-size: 14px; line-height: 1.6; text-align: center; }
+
+    /* MAIN */
+    #screen-main { justify-content: flex-start; padding: 0; min-height: 100vh; }
+    .topbar { width: 100%; background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .topbar-brand { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .topbar-user { display: flex; align-items: center; gap: 10px; }
+    .user-avatar { width: 36px; height: 36px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; }
+    .user-name { font-size: 14px; font-weight: 500; }
+    .main-content { width: 100%; max-width: 680px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; gap: 28px; }
+    .section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+
+    /* ADD FORM */
+    .add-section { display: flex; flex-direction: column; gap: 14px; }
+    .add-form { display: flex; flex-direction: column; gap: 10px; }
+    .input-row { display: flex; gap: 10px; }
+    .input-row .input-field { flex: 1; }
+
+    /* SONGS */
+    .my-songs-section { display: flex; flex-direction: column; gap: 12px; }
+    .songs-list { display: flex; flex-direction: column; gap: 8px; }
+    .song-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .song-thumb { width: 50px; height: 36px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+    .song-info { flex: 1; min-width: 0; }
+    .song-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+    .song-meta { font-size: 11px; color: var(--muted); }
+    .song-status { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 500; flex-shrink: 0; }
+    .song-status.adding { background: rgba(255,60,172,0.15); color: var(--accent); }
+    .song-status.done { background: rgba(0,229,160,0.15); color: var(--success); }
+    .song-status.error { background: rgba(255,80,80,0.15); color: #ff5050; }
+
+    /* TOAST */
+    .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+    .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; font-size: 13px; font-weight: 500; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    .toast.success { border-color: var(--success); color: var(--success); }
+    .toast.error { border-color: #ff5050; color: #ff5050; }
+    .toast.info { border-color: var(--accent); color: var(--accent); }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; color: var(--muted); font-size: 14px; }
+
+    @media (max-width: 480px) {
+      .main-content { padding: 20px 16px; }
+      .topbar { padding: 14px 16px; }
+      .input-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- WELCOME -->
+  <div class="screen active" id="screen-welcome">
+    <div class="logo-area">
+      <div class="mic-icon">🎤</div>
+      <div class="app-title">KARAOKÉ</div>
+      <div class="app-subtitle">Ajoute tes chansons à la playlist</div>
+    </div>
+    <div class="welcome-form">
+      <div class="input-group">
+        <label>Ton prénom</label>
+        <input class="input-field" id="input-name" type="text" placeholder="Ex: Marie" autocomplete="off" maxlength="30" />
+      </div>
+      <button class="btn-primary" id="btn-start" disabled>C'est parti 🎶</button>
+    </div>
+  </div>
+
+  <!-- ADMIN : après connexion Google, on affiche le lien à partager -->
+  <div class="screen" id="screen-admin">
+    <div class="admin-card">
+      <div style="font-size:48px">🎛️</div>
+      <div class="admin-badge">Mode Admin</div>
+      <div class="admin-title">App prête ! 🎉</div>
+      <div class="admin-desc">Copie ce lien et envoie-le sur le groupe WhatsApp. Les invités n'auront qu'à entrer leur prénom !</div>
+      <div class="token-box" id="share-link-box">Génération du lien…</div>
+      <button class="btn-copy" id="btn-copy-link">📋 Copier le lien</button>
+      <button class="btn-primary" id="btn-admin-enter">Accéder à l'app →</button>
+    </div>
+  </div>
+
+  <!-- WAITING : invité sans token -->
+  <div class="screen" id="screen-waiting">
+    <div class="waiting-card">
+      <div class="waiting-icon">⏳</div>
+      <div class="waiting-title">Pas encore prêt</div>
+      <div class="waiting-desc">Mathieu n'a pas encore partagé le bon lien. Demande-lui d'envoyer le lien depuis son téléphone !</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="screen" id="screen-main">
+    <div class="topbar">
+      <div class="topbar-brand">🎤 KARAOKÉ</div>
+      <div class="topbar-user">
+        <div class="user-avatar" id="avatar-initials">?</div>
+        <div class="user-name" id="topbar-username">—</div>
+      </div>
+    </div>
+    <div class="main-content">
+
+      <div class="add-section">
+        <div class="section-title">Ajoute ta chanson 🎵</div>
+        <div class="add-form">
+          <input class="input-field" id="song-title" type="text" placeholder="Titre de la chanson" autocomplete="off" />
+          <input class="input-field" id="song-artist" type="text" placeholder="Artiste (optionnel)" autocomplete="off" />
+          <button class="btn-primary" id="btn-add">Ajouter à la playlist ➕</button>
+        </div>
+      </div>
+
+      <div class="my-songs-section" id="my-songs-section" style="display:none;">
+        <div class="section-title">Mes chansons</div>
+        <div class="songs-list" id="songs-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── CONFIG ──
+const CONFIG = {
+  apiKey: 'AIzaSyARSowOUckq_NbnFl3b2RnlU8QOcATdNug',
+  clientId: '1031238692497-7jiuh5d0v4as084jkphisj0kgsqtj1hp.apps.googleusercontent.com',
+  playlistId: 'PLzmpVmU1OuzfoDs9tXLT54-ipwGRX-GLQ',
+  scopes: 'https://www.googleapis.com/auth/youtube',
+  adminName: 'mathieu',
+};
+
+let state = { userName: '', accessToken: null, songs: [] };
+
+// ── UTILS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function saveSongs() {
+  localStorage.setItem('karaoke_songs_' + state.userName, JSON.stringify(state.songs));
+}
+
+function loadSongs() {
+  try { return JSON.parse(localStorage.getItem('karaoke_songs_' + state.userName)) || []; } catch { return []; }
+}
+
+// ── TOKEN dans l'URL : ?t=XXXXX
+// L'admin se connecte → génère un lien avec son token → partage ce lien
+// Les invités ouvrent ce lien → token dans l'URL → fonctionne pour tout le monde
+
+function getTokenFromURL() {
+  return new URLSearchParams(window.location.search).get('t');
+}
+
+function buildShareLink(token) {
+  return window.location.origin + window.location.pathname + '?t=' + encodeURIComponent(token);
+}
+
+// ── WELCOME ──
+const inputName = document.getElementById('input-name');
+const btnStart = document.getElementById('btn-start');
+
+const savedName = localStorage.getItem('karaoke_user');
+if (savedName) { inputName.value = savedName; btnStart.disabled = false; }
+
+inputName.addEventListener('input', () => { btnStart.disabled = inputName.value.trim().length < 1; });
+inputName.addEventListener('keydown', e => { if (e.key === 'Enter' && !btnStart.disabled) btnStart.click(); });
+
+btnStart.addEventListener('click', () => {
+  const name = inputName.value.trim();
+  if (!name) return;
+  state.userName = name;
+  localStorage.setItem('karaoke_user', name);
+
+  const urlToken = getTokenFromURL();
+
+  if (urlToken) {
+    // Token dans l'URL → tout le monde peut utiliser l'app
+    state.accessToken = urlToken;
+    enterMain();
+  } else if (name.toLowerCase() === CONFIG.adminName) {
+    // Admin sans token → connexion Google
+    startOAuth();
+  } else {
+    // Invité sans token → pas le bon lien
+    showScreen('screen-waiting');
+  }
+});
+
+// ── OAUTH ──
+function startOAuth() {
+  const params = new URLSearchParams({
+    client_id: CONFIG.clientId,
+    redirect_uri: window.location.origin + window.location.pathname,
+    response_type: 'token',
+    scope: CONFIG.scopes,
+    include_granted_scopes: 'true',
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+}
+
+function handleOAuthCallback() {
+  const hash = window.location.hash;
+  if (!hash.includes('access_token')) return false;
+  const params = new URLSearchParams(hash.substring(1));
+  const token = params.get('access_token');
+  if (!token) return false;
+
+  state.accessToken = token;
+  history.replaceState(null, '', window.location.pathname);
+
+  // Restaure le nom si sauvegardé
+  const name = localStorage.getItem('karaoke_user');
+  if (name) state.userName = name;
+
+  // Affiche écran admin avec le lien à partager
+  const link = buildShareLink(token);
+  document.getElementById('share-link-box').textContent = link;
+
+  document.getElementById('btn-copy-link').addEventListener('click', () => {
+    navigator.clipboard.writeText(link).then(() => toast('✅ Lien copié !', 'success'));
+  });
+
+  document.getElementById('btn-admin-enter').addEventListener('click', () => {
+    enterMain();
+  });
+
+  showScreen('screen-admin');
+  return true;
+}
+
+// ── MAIN ──
+function enterMain() {
+  document.getElementById('topbar-username').textContent = state.userName;
+  document.getElementById('avatar-initials').textContent = state.userName.charAt(0).toUpperCase();
+  state.songs = loadSongs();
+  renderSongs();
+  showScreen('screen-main');
+}
+
+// ── ADD SONG ──
+document.getElementById('btn-add').addEventListener('click', handleAddSong);
+document.getElementById('song-title').addEventListener('keydown', e => { if (e.key === 'Enter') handleAddSong(); });
+document.getElementById('song-artist').addEventListener('keydown', e => { if (e.key === 'Enter') handleAddSong(); });
+
+async function handleAddSong() {
+  const titleEl = document.getElementById('song-title');
+  const artistEl = document.getElementById('song-artist');
+  const title = titleEl.value.trim();
+  const artist = artistEl.value.trim();
+  if (!title) { toast('Entre le titre de la chanson 🎵', 'error'); return; }
+
+  const btn = document.getElementById('btn-add');
+  btn.disabled = true;
+  btn.textContent = '⏳ Recherche…';
+
+  try {
+    // Cherche la meilleure vidéo karaoké (on filtre les Shorts)
+    const video = await findBestKaraokeVideo(title, artist);
+    if (!video) {
+      toast('Aucune vidéo karaoké trouvée. Essaie un autre titre.', 'error');
+      btn.disabled = false; btn.textContent = 'Ajouter à la playlist ➕';
+      return;
+    }
+
+    // Vérifie les doublons dans la playlist YouTube
+    const isDuplicate = await checkDuplicate(video.videoId);
+    let finalVideo = video;
+    if (isDuplicate) {
+      toast('Cette chanson est déjà dans la playlist, on cherche une alternative…', 'info');
+      finalVideo = await findBestKaraokeVideo(title, artist, video.videoId);
+      if (!finalVideo) {
+        toast('La chanson est déjà dans la playlist !', 'error');
+        btn.disabled = false; btn.textContent = 'Ajouter à la playlist ➕';
+        return;
+      }
+    }
+
+    // Ajoute à la playlist
+    const entry = { ...finalVideo, status: 'adding', addedBy: state.userName, addedAt: Date.now() };
+    state.songs.push(entry);
+    saveSongs();
+    renderSongs();
+    titleEl.value = ''; artistEl.value = '';
+
+    await addToYouTubePlaylist(finalVideo.videoId);
+    entry.status = 'done';
+    saveSongs();
+    renderSongs();
+    toast('✅ Ajoutée à la playlist !', 'success');
+
+  } catch(e) {
+    const last = state.songs[state.songs.length - 1];
+    if (last) { last.status = 'error'; saveSongs(); renderSongs(); }
+    if (e.message === 'token_expired') {
+      toast('Session expirée. Mathieu doit partager un nouveau lien.', 'error');
+    } else {
+      toast('Erreur : ' + e.message, 'error');
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Ajouter à la playlist ➕';
+}
+
+// ── FIND BEST KARAOKE VIDEO ──
+// Cherche plusieurs résultats, filtre les Shorts (< 90s), prend le meilleur
+async function findBestKaraokeVideo(title, artist, excludeId = null) {
+  const query = encodeURIComponent(`${title} ${artist} karaoké`);
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&videoDuration=medium&q=${query}&key=${CONFIG.apiKey}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (!data.items || data.items.length === 0) return null;
+
+  // Récupère les durées pour filtrer les Shorts
+  const ids = data.items.map(i => i.id.videoId).filter(id => id !== excludeId).join(',');
+  if (!ids) return null;
+
+  const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=${ids}&key=${CONFIG.apiKey}`;
+  const detailsRes = await fetch(detailsUrl);
+  const detailsData = await detailsRes.json();
+
+  // Filtre : durée > 90 secondes (élimine les Shorts)
+  const validVideos = (detailsData.items || []).filter(v => {
+    const dur = parseISO8601Duration(v.contentDetails.duration);
+    return dur > 90;
+  });
+
+  if (validVideos.length === 0) return null;
+
+  const best = validVideos[0];
+  return {
+    videoId: best.id,
+    title: best.snippet.title,
+    channel: best.snippet.channelTitle,
+    thumb: best.snippet.thumbnails?.default?.url || '',
+  };
+}
+
+// Parse durée ISO 8601 (PT3M45S → secondes)
+function parseISO8601Duration(dur) {
+  const match = dur.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
+  return (parseInt(match[1]||0)*3600) + (parseInt(match[2]||0)*60) + parseInt(match[3]||0);
+}
+
+// ── CHECK DUPLICATE in playlist ──
+async function checkDuplicate(videoId) {
+  try {
+    let nextPageToken = '';
+    do {
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${CONFIG.playlistId}&key=${CONFIG.apiKey}${nextPageToken ? '&pageToken=' + nextPageToken : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.items && data.items.some(i => i.snippet.resourceId.videoId === videoId)) return true;
+      nextPageToken = data.nextPageToken || '';
+    } while (nextPageToken);
+    return false;
+  } catch { return false; }
+}
+
+// ── ADD TO YOUTUBE PLAYLIST ──
+async function addToYouTubePlaylist(videoId) {
+  const res = await fetch('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + state.accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ snippet: { playlistId: CONFIG.playlistId, resourceId: { kind: 'youtube#video', videoId } } })
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('token_expired');
+    const err = await res.json();
+    throw new Error(err.error?.message || 'YouTube API error');
+  }
+}
+
+// ── RENDER SONGS ──
+function renderSongs() {
+  const section = document.getElementById('my-songs-section');
+  const list = document.getElementById('songs-list');
+  if (state.songs.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'flex';
+  list.innerHTML = '';
+  [...state.songs].reverse().forEach(song => {
+    const el = document.createElement('div');
+    el.className = 'song-item';
+    const statusLabel = song.status === 'adding' ? '⏳ Ajout…' : song.status === 'done' ? '✅ Ajoutée' : '❌ Erreur';
+    const statusClass = song.status === 'adding' ? 'adding' : song.status === 'done' ? 'done' : 'error';
+    el.innerHTML = `
+      ${song.thumb ? `<img class="song-thumb" src="${escapeHtml(song.thumb)}" alt="" />` : ''}
+      <div class="song-info">
+        <div class="song-title">${escapeHtml(song.title)}</div>
+        <div class="song-meta">Ajouté par ${escapeHtml(song.addedBy)}</div>
+      </div>
+      <span class="song-status ${statusClass}">${statusLabel}</span>
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ── INIT ──
+if (!handleOAuthCallback()) {
+  const urlToken = getTokenFromURL();
+  const savedName = localStorage.getItem('karaoke_user');
+  if (urlToken && savedName) {
+    state.userName = savedName;
+    state.accessToken = urlToken;
+    enterMain();
+  } else {
+    showScreen('screen-welcome');
+  }
+}
+</script>
+</body>
+</html>
