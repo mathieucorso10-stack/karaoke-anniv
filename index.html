@@ -269,7 +269,8 @@ const C = {
   playlistId: 'PLzmpVmU1OuzfoDs9tXLT54-ipwGRX-GLQ',
   scopes:     'https://www.googleapis.com/auth/youtube',
   adminName:  'mathieu',
-  sheetdb:    'https://script.google.com/macros/s/AKfycbyjdOk8T6n_CYZ0I-_hggVSzhD4HlbN7bkGvHKOqVdbcJwNilbu3FOekgOnjVLXveqxuA/exec',
+  supaUrl:    'https://iwtdvkvuxctadsbxoobq.supabase.co',
+  supaKey:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3dGR2a3Z1eGN0YWRzYnhvb2JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE0NDg1MDMsImV4cCI6MjA5NzAyNDUwM30.FDYyxTZewnKz9_5VZZS0Lk0ZiCjEnw9OSTKNFLCGZos',
 };
 
 // ═══════════════════════════════════
@@ -321,22 +322,38 @@ function confetti() {
 // ═══════════════════════════════════
 // SHEETDB
 // ═══════════════════════════════════
+function sbHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': C.supaKey,
+    'Authorization': 'Bearer ' + C.supaKey,
+  };
+}
 async function dbGetAll() {
-  const r = await fetch(C.sheetdb + '?action=getall&t=' + Date.now());
+  const r = await fetch(C.supaUrl + '/rest/v1/songs?select=*&order=timestamp.asc', {headers: sbHeaders()});
   const d = await r.json();
   return Array.isArray(d) ? d : [];
 }
 async function dbAdd(row) {
-  const params = new URLSearchParams({action: 'add', ...row});
-  const r = await fetch(C.sheetdb + '?' + params.toString());
-  const d = await r.json();
-  if (!d.ok) throw new Error('Erreur base de données');
+  const r = await fetch(C.supaUrl + '/rest/v1/songs', {
+    method: 'POST',
+    headers: {...sbHeaders(), 'Prefer': 'return=minimal'},
+    body: JSON.stringify(row)
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Erreur base de données'); }
 }
 async function dbDelete(videoId) {
-  await fetch(C.sheetdb + '?action=delete&videoId=' + encodeURIComponent(videoId) + '&t=' + Date.now());
+  await fetch(C.supaUrl + '/rest/v1/songs?videoId=eq.' + encodeURIComponent(videoId), {
+    method: 'DELETE',
+    headers: sbHeaders()
+  });
 }
 async function dbUpdateStatus(videoId, statut) {
-  await fetch(C.sheetdb + '?action=update&videoId=' + encodeURIComponent(videoId) + '&statut=' + encodeURIComponent(statut) + '&t=' + Date.now());
+  await fetch(C.supaUrl + '/rest/v1/songs?videoId=eq.' + encodeURIComponent(videoId), {
+    method: 'PATCH',
+    headers: {...sbHeaders(), 'Prefer': 'return=minimal'},
+    body: JSON.stringify({statut})
+  });
 }
 
 // ═══════════════════════════════════
